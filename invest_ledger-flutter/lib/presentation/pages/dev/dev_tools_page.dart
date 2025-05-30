@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../data/datasources/local/sample_data.dart';
 import '../../../data/database/database_helper.dart';
 import '../../providers/user_provider.dart';
-import '../../providers/transaction_provider.dart';
 
 class DevToolsPage extends ConsumerStatefulWidget {
   const DevToolsPage({super.key});

@@ -1,4 +1,3 @@
-import 'package:sqflite/sqflite.dart';
 import 'package:uuid/uuid.dart';
 import 'package:decimal/decimal.dart';
 
@@ -61,10 +60,10 @@ class InvestmentGoalDao {
     int? month,
   }) async {
     final db = await DatabaseHelper.database;
-    
+
     String whereClause = 'user_id = ? AND type = ? AND period = ? AND year = ?';
     List<dynamic> whereArgs = [userId, type.name, period.name, year];
-    
+
     if (period == GoalPeriod.monthly && month != null) {
       whereClause += ' AND month = ?';
       whereArgs.add(month);
@@ -122,8 +121,8 @@ class InvestmentGoalDao {
       targetAmount: Decimal.parse(map['target_amount'] as String),
       description: map['description'] as String?,
       createdAt: DateTime.parse(map['created_at'] as String),
-      updatedAt: map['updated_at'] != null 
-          ? DateTime.parse(map['updated_at'] as String) 
+      updatedAt: map['updated_at'] != null
+          ? DateTime.parse(map['updated_at'] as String)
           : null,
     );
   }

@@ -51,6 +51,9 @@ dependencies:
   lucide_icons: ^0.257.0
   phosphor_flutter: ^2.0.1
 
+  # 本地存储
+  shared_preferences: ^2.2.2
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

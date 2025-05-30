@@ -13,15 +13,19 @@ class InvestLedgerApp extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final themeMode = ref.watch(themeProvider);
 
-    return GlobalLoadingOverlay(
-      child: MaterialApp.router(
-        title: 'InvestLedger',
-        theme: AppTheme.lightTheme,
-        darkTheme: AppTheme.darkTheme,
-        themeMode: themeMode,
-        routerConfig: ref.watch(routerProvider),
-        debugShowCheckedModeBanner: false,
-      ),
+    return MaterialApp.router(
+      title: 'InvestLedger',
+      theme: AppTheme.lightTheme,
+      darkTheme: AppTheme.darkTheme,
+      themeMode: themeMode,
+      routerConfig: ref.watch(routerProvider),
+      debugShowCheckedModeBanner: false,
+      builder: (context, child) {
+        // 在这里包装 GlobalLoadingOverlay，确保它在 MaterialApp 内部
+        return GlobalLoadingOverlay(
+          child: child ?? const SizedBox.shrink(),
+        );
+      },
     );
   }
 }

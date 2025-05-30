@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'package:sqflite/sqflite.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../models/user.dart';
@@ -14,7 +13,7 @@ class UserDao {
   }) async {
     final db = await DatabaseHelper.database;
     final id = const Uuid().v4();
-    
+
     final user = User(
       id: id,
       name: name,
@@ -108,8 +107,8 @@ class UserDao {
       name: map['name'],
       email: map['email'],
       createdAt: DateTime.parse(map['created_at']),
-      lastLoginAt: map['last_login_at'] != null 
-          ? DateTime.parse(map['last_login_at']) 
+      lastLoginAt: map['last_login_at'] != null
+          ? DateTime.parse(map['last_login_at'])
           : null,
       settings: UserSettings.fromJson(jsonDecode(map['settings'])),
     );
