@@ -6,13 +6,26 @@ import '../../../data/models/transaction.dart';
 
 import '../../providers/transaction_provider.dart';
 import '../../widgets/stock_investment_card.dart';
+import '../../widgets/refresh_button.dart';
+import '../../widgets/animated_card.dart';
 import '../../utils/loading_utils.dart';
 
-class TransactionsPage extends ConsumerWidget {
+class TransactionsPage extends ConsumerStatefulWidget {
   const TransactionsPage({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<TransactionsPage> createState() => _TransactionsPageState();
+}
+
+class _TransactionsPageState extends ConsumerState<TransactionsPage>
+    with AutomaticKeepAliveClientMixin {
+
+  @override
+  bool get wantKeepAlive => true; // 保持页面状态，避免重建
+
+  @override
+  Widget build(BuildContext context) {
+    super.build(context); // 必须调用，用于保活机制
     final transactionsAsync = ref.watch(transactionNotifierProvider);
 
     return Scaffold(
@@ -26,11 +39,12 @@ class TransactionsPage extends ConsumerWidget {
             icon: const Icon(Icons.search),
             tooltip: '搜索交易',
           ),
-          IconButton(
-            onPressed: () {
+          RefreshButton.icon(
+            onRefresh: () async {
               ref.invalidate(transactionNotifierProvider);
             },
-            icon: const Icon(Icons.refresh),
+            loadingMessage: '正在刷新交易记录...',
+            tooltip: '刷新数据',
           ),
         ],
       ),
@@ -45,9 +59,12 @@ class TransactionsPage extends ConsumerWidget {
               const SizedBox(height: 16),
               Text('加载失败: $error'),
               const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: () => ref.invalidate(transactionNotifierProvider),
-                child: const Text('重试'),
+              RefreshButton.filled(
+                onRefresh: () async {
+                  ref.invalidate(transactionNotifierProvider);
+                },
+                label: '重试',
+                loadingMessage: '正在重新加载...',
               ),
             ],
           ),
@@ -96,19 +113,27 @@ class _TransactionsList extends StatelessWidget {
       itemCount: transactions.length,
       itemBuilder: (context, index) {
         final transaction = transactions[index];
-        return Padding(
-          padding: const EdgeInsets.only(bottom: 8),
-          child: StockInvestmentCard(
-            transaction: transaction,
-            onTap: () {
-              context.push('/transactions/${transaction.id}');
-            },
-            onEdit: () {
-              context.push('/transactions/edit/${transaction.id}');
-            },
-            onDelete: () {
-              _showDeleteDialog(context, transaction);
-            },
+        return SmartAnimatedCard(
+          initialDelay: Duration(milliseconds: index * 50), // 初始错开动画
+          animationType: CardAnimationType.fadeSlideIn,
+          slideDirection: SlideDirection.fromRight,
+          enableScrollAnimation: true, // 启用滚动动画
+          enableInitialAnimation: index < 10, // 只对前10个启用初始动画
+          visibilityThreshold: 0.1,
+          child: Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: StockInvestmentCard(
+              transaction: transaction,
+              onTap: () {
+                context.push('/transactions/${transaction.id}');
+              },
+              onEdit: () {
+                context.push('/transactions/edit/${transaction.id}');
+              },
+              onDelete: () {
+                _showDeleteDialog(context, transaction);
+              },
+            ),
           ),
         );
       },

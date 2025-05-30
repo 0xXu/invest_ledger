@@ -29,6 +29,9 @@ class _DesktopLayout extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final currentIndex = ref.watch(navigationProvider);
 
+    // 根据当前路由更新导航状态
+    _updateNavigationIndex(context, ref);
+
     return Scaffold(
       body: Row(
         children: [
@@ -76,6 +79,34 @@ class _DesktopLayout extends ConsumerWidget {
     );
   }
 
+  void _updateNavigationIndex(BuildContext context, WidgetRef ref) {
+    final location = GoRouterState.of(context).uri.path;
+    int newIndex = 0;
+
+    if (location.startsWith('/dashboard')) {
+      newIndex = 0;
+    } else if (location.startsWith('/transactions')) {
+      newIndex = 1;
+    } else if (location.startsWith('/shared-investment')) {
+      newIndex = 2;
+    } else if (location.startsWith('/analytics')) {
+      newIndex = 3;
+    } else if (location.startsWith('/settings')) {
+      newIndex = 4;
+    }
+
+    // 只有当索引不同时才更新，避免无限循环和不必要的重建
+    final currentIndex = ref.read(navigationProvider);
+    if (currentIndex != newIndex) {
+      // 使用微任务延迟更新，避免在build过程中修改状态
+      Future.microtask(() {
+        if (context.mounted) {
+          ref.read(navigationProvider.notifier).setIndex(newIndex);
+        }
+      });
+    }
+  }
+
   void _navigateToPage(BuildContext context, int index) {
     switch (index) {
       case 0:
@@ -105,6 +136,9 @@ class _MobileLayout extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final currentIndex = ref.watch(navigationProvider);
+
+    // 根据当前路由更新导航状态
+    _updateNavigationIndex(context, ref);
 
     return Scaffold(
       body: child,
@@ -143,6 +177,34 @@ class _MobileLayout extends ConsumerWidget {
         ],
       ),
     );
+  }
+
+  void _updateNavigationIndex(BuildContext context, WidgetRef ref) {
+    final location = GoRouterState.of(context).uri.path;
+    int newIndex = 0;
+
+    if (location.startsWith('/dashboard')) {
+      newIndex = 0;
+    } else if (location.startsWith('/transactions')) {
+      newIndex = 1;
+    } else if (location.startsWith('/shared-investment')) {
+      newIndex = 2;
+    } else if (location.startsWith('/analytics')) {
+      newIndex = 3;
+    } else if (location.startsWith('/settings')) {
+      newIndex = 4;
+    }
+
+    // 只有当索引不同时才更新，避免无限循环和不必要的重建
+    final currentIndex = ref.read(navigationProvider);
+    if (currentIndex != newIndex) {
+      // 使用微任务延迟更新，避免在build过程中修改状态
+      Future.microtask(() {
+        if (context.mounted) {
+          ref.read(navigationProvider.notifier).setIndex(newIndex);
+        }
+      });
+    }
   }
 
   void _navigateToPage(BuildContext context, int index) {

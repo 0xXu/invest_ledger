@@ -55,12 +55,11 @@ final allUsersProvider = AutoDisposeFutureProvider<List<User>>.internal(
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef AllUsersRef = AutoDisposeFutureProviderRef<List<User>>;
-String _$userNotifierHash() => r'31f9f73a2bbd06b22f1130891c05598c37580ef2';
+String _$userNotifierHash() => r'e7a764cc1a6e94baab023d63066baa582583051f';
 
 /// See also [UserNotifier].
 @ProviderFor(UserNotifier)
-final userNotifierProvider =
-    AutoDisposeNotifierProvider<UserNotifier, User?>.internal(
+final userNotifierProvider = NotifierProvider<UserNotifier, User?>.internal(
   UserNotifier.new,
   name: r'userNotifierProvider',
   debugGetCreateSourceHash:
@@ -69,6 +68,6 @@ final userNotifierProvider =
   allTransitiveDependencies: null,
 );
 
-typedef _$UserNotifier = AutoDisposeNotifier<User?>;
+typedef _$UserNotifier = Notifier<User?>;
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package

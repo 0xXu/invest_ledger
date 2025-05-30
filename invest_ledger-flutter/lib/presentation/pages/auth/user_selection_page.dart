@@ -225,13 +225,21 @@ class _UserSelectionPageState extends ConsumerState<UserSelectionPage> {
     setState(() => _isLoading = true);
 
     try {
-      await ref.read(userProvider.notifier).createUser(
+      final success = await ref.read(userProvider.notifier).createUser(
         name: _nameController.text.trim(),
         email: _emailController.text.trim(),
       );
 
-      if (mounted) {
+      if (success && mounted) {
+        // 创建成功，跳转到仪表盘
         context.go('/dashboard');
+      } else if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('创建用户失败，请重试'),
+            backgroundColor: Colors.red,
+          ),
+        );
       }
     } catch (e) {
       if (mounted) {
@@ -265,15 +273,43 @@ class _UserSelectionPageState extends ConsumerState<UserSelectionPage> {
 
   Future<void> _loginUser(String email) async {
     try {
-      await ref.read(userProvider.notifier).login(email);
+      final success = await ref.read(userProvider.notifier).login(email);
 
-      if (mounted) {
-        context.go('/dashboard');
+      if (success && mounted) {
+        // 等待一个短暂的延迟，确保状态已经传播
+        await Future.delayed(const Duration(milliseconds: 100));
+
+        // 再次确认用户状态
+        final user = ref.read(userProvider);
+        print('延迟后检查用户状态: ${user?.name ?? 'null'}');
+        if (user != null && mounted) {
+          print('用户状态确认成功，跳转到仪表盘');
+          // 登录成功，跳转到仪表盘
+          context.go('/dashboard');
+        } else if (mounted) {
+          print('用户状态仍为null，显示错误信息');
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('登录状态异常，请重试'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      } else if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('登录失败，请检查用户信息'),
+            backgroundColor: Colors.red,
+          ),
+        );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('登录失败: $e')),
+          SnackBar(
+            content: Text('登录失败: $e'),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     }

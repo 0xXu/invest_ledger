@@ -44,6 +44,10 @@ class _AddTransactionPageState extends ConsumerState<AddTransactionPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('添加交易'),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => _handleBackNavigation(context),
+        ),
         actions: [
           TextButton(
             onPressed: _saveTransaction,
@@ -221,6 +225,23 @@ class _AddTransactionPageState extends ConsumerState<AddTransactionPage> {
     );
   }
 
+  void _handleBackNavigation(BuildContext context) {
+    // 检查URL参数中是否有来源信息
+    final uri = GoRouterState.of(context).uri;
+    final fromDashboard = uri.queryParameters['from'] == 'dashboard';
+
+    if (fromDashboard) {
+      // 如果是从仪表盘来的，直接返回仪表盘
+      context.go('/dashboard');
+    } else if (context.canPop()) {
+      // 否则使用标准的返回逻辑
+      context.pop();
+    } else {
+      // 默认返回交易页面（因为这是交易的子路由）
+      context.go('/transactions');
+    }
+  }
+
   Future<void> _selectDate() async {
     final picked = await showDatePicker(
       context: context,
@@ -295,12 +316,20 @@ class _AddTransactionPageState extends ConsumerState<AddTransactionPage> {
         );
 
         if (mounted) {
+          // 检查来源页面
+          final uri = GoRouterState.of(context).uri;
+          final fromDashboard = uri.queryParameters['from'] == 'dashboard';
+
           if (shouldNavigateToTransactions == true) {
             // 跳转到交易记录页面
             context.go('/transactions');
           } else {
-            // 返回仪表盘
-            context.go('/dashboard');
+            // 根据来源返回相应页面
+            if (fromDashboard) {
+              context.go('/dashboard');
+            } else {
+              context.go('/transactions');
+            }
           }
         }
       }

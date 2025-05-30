@@ -12,35 +12,24 @@ import '../presentation/pages/shared_investment/shared_investment_page.dart';
 import '../presentation/pages/analytics/analytics_page.dart';
 import '../presentation/pages/settings/settings_page.dart';
 import '../presentation/pages/auth/user_selection_page.dart';
+import '../presentation/pages/auth/splash_page.dart';
+import '../presentation/pages/test/refresh_button_test_page.dart';
+import '../presentation/pages/dev/dev_tools_page.dart';
 import '../presentation/widgets/main_layout.dart';
 
 
 final routerProvider = Provider<GoRouter>((ref) {
-  // 监听用户状态变化，当用户登录/登出时刷新路由
-  ref.watch(userProvider);
-
   return GoRouter(
     initialLocation: '/',
-    redirect: (context, state) {
-      final user = ref.read(userProvider);
-      final isAuthRoute = state.matchedLocation == '/';
-
-      // 如果用户未登录且不在登录页面，重定向到登录页面
-      if (user == null && !isAuthRoute) {
-        return '/';
-      }
-
-      // 如果用户已登录且在登录页面，重定向到仪表盘
-      if (user != null && isAuthRoute) {
-        return '/dashboard';
-      }
-
-      return null;
-    },
     routes: [
       GoRoute(
         path: '/',
-        name: 'auth',
+        name: 'splash',
+        builder: (context, state) => const SplashPage(),
+      ),
+      GoRoute(
+        path: '/user-selection',
+        name: 'user-selection',
         builder: (context, state) => const UserSelectionPage(),
       ),
       ShellRoute(
@@ -98,6 +87,16 @@ final routerProvider = Provider<GoRouter>((ref) {
             path: '/settings',
             name: 'settings',
             builder: (context, state) => const SettingsPage(),
+          ),
+          GoRoute(
+            path: '/test/refresh-button',
+            name: 'refresh-button-test',
+            builder: (context, state) => const RefreshButtonTestPage(),
+          ),
+          GoRoute(
+            path: '/dev-tools',
+            name: 'dev-tools',
+            builder: (context, state) => const DevToolsPage(),
           ),
         ],
       ),

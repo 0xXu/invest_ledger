@@ -6,12 +6,25 @@ import '../../providers/transaction_provider.dart';
 import '../../providers/color_theme_provider.dart';
 import '../../widgets/charts/profit_loss_chart.dart';
 import '../../widgets/charts/stock_distribution_chart.dart';
+import '../../widgets/refresh_button.dart';
+import '../../widgets/animated_card.dart';
 
-class AnalyticsPage extends ConsumerWidget {
+class AnalyticsPage extends ConsumerStatefulWidget {
   const AnalyticsPage({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<AnalyticsPage> createState() => _AnalyticsPageState();
+}
+
+class _AnalyticsPageState extends ConsumerState<AnalyticsPage>
+    with AutomaticKeepAliveClientMixin {
+
+  @override
+  bool get wantKeepAlive => true; // 保持页面状态，避免重建
+
+  @override
+  Widget build(BuildContext context) {
+    super.build(context); // 必须调用，用于保活机制
     final transactionsAsync = ref.watch(transactionNotifierProvider);
     final statsAsync = ref.watch(transactionStatsProvider);
 
@@ -29,12 +42,12 @@ class AnalyticsPage extends ConsumerWidget {
             icon: const Icon(LucideIcons.download),
             tooltip: '导出报告',
           ),
-          IconButton(
-            onPressed: () {
+          RefreshButton.icon(
+            onRefresh: () async {
               ref.invalidate(transactionNotifierProvider);
               ref.invalidate(transactionStatsProvider);
             },
-            icon: const Icon(LucideIcons.refreshCw),
+            loadingMessage: '正在刷新分析数据...',
             tooltip: '刷新数据',
           ),
         ],
@@ -53,12 +66,13 @@ class AnalyticsPage extends ConsumerWidget {
               const SizedBox(height: 16),
               Text('加载失败: $error'),
               const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: () {
+              RefreshButton.filled(
+                onRefresh: () async {
                   ref.invalidate(transactionNotifierProvider);
                   ref.invalidate(transactionStatsProvider);
                 },
-                child: const Text('重试'),
+                label: '重试',
+                loadingMessage: '正在重新加载...',
               ),
             ],
           ),
@@ -106,8 +120,11 @@ class _AnalyticsContent extends StatelessWidget {
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: AnimatedCardList(
+        staggerDelay: const Duration(milliseconds: 200),
+        animationType: CardAnimationType.fadeSlideIn,
+        slideDirection: SlideDirection.fromBottom,
+        enableScrollAnimation: true,
         children: [
           // 统计概览
           statsAsync.when(
@@ -252,9 +269,9 @@ class _StatItem extends StatelessWidget {
       padding: const EdgeInsets.all(12),
       margin: const EdgeInsets.symmetric(horizontal: 4),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: color.withOpacity(0.3)),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
       ),
       child: Column(
         children: [

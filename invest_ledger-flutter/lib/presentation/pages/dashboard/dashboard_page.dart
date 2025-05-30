@@ -11,50 +11,61 @@ import '../../providers/investment_goal_provider.dart';
 import '../../providers/color_theme_provider.dart';
 import '../../widgets/stock_investment_card.dart';
 import '../../widgets/goal_progress_card.dart';
-import '../../utils/loading_utils.dart';
+import '../../widgets/refresh_button.dart';
+import '../../widgets/animated_card.dart';
 
-class DashboardPage extends ConsumerWidget {
+class DashboardPage extends ConsumerStatefulWidget {
   const DashboardPage({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<DashboardPage> createState() => _DashboardPageState();
+}
+
+class _DashboardPageState extends ConsumerState<DashboardPage>
+    with AutomaticKeepAliveClientMixin {
+
+  @override
+  bool get wantKeepAlive => true; // 保持页面状态，避免重建
+
+  @override
+  Widget build(BuildContext context) {
+    super.build(context); // 必须调用，用于保活机制
     final user = ref.watch(userProvider);
     final transactionsAsync = ref.watch(transactionNotifierProvider);
     final statsAsync = ref.watch(transactionStatsProvider);
 
-    // 如果用户未登录，显示错误信息
+
+
+    // 如果用户未登录，重新导航到用户选择页面
     if (user == null) {
-      return Scaffold(
-        appBar: AppBar(title: const Text('未登录')),
-        body: const Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.error, size: 64, color: Colors.red),
-              SizedBox(height: 16),
-              Text('用户未登录，请重新登录'),
-            ],
-          ),
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          context.go('/user-selection');
+        }
+      });
+      return const Scaffold(
+        body: Center(
+          child: CircularProgressIndicator(),
         ),
       );
     }
+
+
 
     return Scaffold(
       appBar: AppBar(
         title: Text('投资概览 - ${user.name}'),
         actions: [
-          IconButton(
-            onPressed: () async {
-              await ref.withLoading(() async {
-                // 模拟网络延迟
-                await Future.delayed(const Duration(seconds: 1));
-                ref.invalidate(transactionNotifierProvider);
-                ref.invalidate(transactionStatsProvider);
-                ref.invalidate(monthlyGoalProgressProvider);
-                ref.invalidate(yearlyGoalProgressProvider);
-              }, '正在刷新数据...');
+          RefreshButton.icon(
+            onRefresh: () async {
+              // 模拟网络延迟
+              await Future.delayed(const Duration(seconds: 1));
+              ref.invalidate(transactionNotifierProvider);
+              ref.invalidate(transactionStatsProvider);
+              ref.invalidate(monthlyGoalProgressProvider);
+              ref.invalidate(yearlyGoalProgressProvider);
             },
-            icon: const Icon(LucideIcons.refreshCw),
+            loadingMessage: '正在刷新数据...',
             tooltip: '刷新数据',
           ),
           IconButton(
@@ -81,12 +92,13 @@ class DashboardPage extends ConsumerWidget {
               const SizedBox(height: 16),
               Text('加载失败: $error'),
               const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: () {
+              RefreshButton.filled(
+                onRefresh: () async {
                   ref.invalidate(transactionNotifierProvider);
                   ref.invalidate(transactionStatsProvider);
                 },
-                child: const Text('重试'),
+                label: '重试',
+                loadingMessage: '正在重新加载...',
               ),
             ],
           ),
@@ -94,7 +106,7 @@ class DashboardPage extends ConsumerWidget {
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () {
-          context.go('/transactions/add');
+          context.go('/transactions/add?from=dashboard');
         },
         icon: const Icon(LucideIcons.plus),
         label: const Text('添加交易'),
@@ -188,27 +200,39 @@ class _DashboardContent extends ConsumerWidget {
           ),
           const SizedBox(height: 24),
 
-          // 最近交易
+          // 最近交易标题
           Text(
             '最近交易',
             style: Theme.of(context).textTheme.headlineSmall,
           ),
           const SizedBox(height: 16),
 
+          // 最近交易列表
           if (transactions.isEmpty)
             const Center(
               child: Text('暂无交易记录'),
             )
           else
-            ...transactions.take(5).map((transaction) => Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: StockInvestmentCard(
-                transaction: transaction,
-                onTap: () {
-                  context.push('/transactions/${transaction.id}');
-                },
-              ),
-            )),
+            ...transactions.take(5).toList().asMap().entries.map((entry) {
+              final index = entry.key;
+              final transaction = entry.value;
+              return AnimatedCard(
+                delay: Duration(milliseconds: (index + 4) * 150), // 在其他卡片之后
+                animationType: CardAnimationType.fadeSlideIn,
+                slideDirection: SlideDirection.fromBottom,
+                enableScrollVisibility: false, // 关闭滚动可见性检测
+                enableAnimation: true,
+                child: Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: StockInvestmentCard(
+                    transaction: transaction,
+                    onTap: () {
+                      context.push('/transactions/${transaction.id}');
+                    },
+                  ),
+                ),
+              );
+            }),
         ],
       ),
     );
@@ -252,7 +276,11 @@ class _StatsSummary extends ConsumerWidget {
     final colorsAsync = ref.watch(profitLossColorsProvider);
 
     return colorsAsync.when(
-      data: (colors) => Column(
+      data: (colors) => AnimatedCardList(
+        staggerDelay: const Duration(milliseconds: 100),
+        animationType: CardAnimationType.scaleIn,
+        enableAnimation: true,
+        enableScrollAnimation: false, // 关闭滚动动画，避免复杂性
         children: [
           // 第一行：总盈利和总亏损
           Row(

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
-import 'package:decimal/decimal.dart';
 
 import '../../data/models/transaction.dart';
 import '../providers/color_theme_provider.dart';
@@ -246,7 +245,72 @@ class StockInvestmentCard extends ConsumerWidget {
                   ),
                 ],
               ),
-              // 其他内容保持不变...
+
+              // 投资信息
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  _InfoChip(
+                    label: '投资额',
+                    value: '¥${(transaction.amount * transaction.unitPrice).toStringAsFixed(2)}',
+                  ),
+                  const SizedBox(width: 8),
+                  _InfoChip(
+                    label: '收益率',
+                    value: '${_calculateReturnRate().toStringAsFixed(2)}%',
+                  ),
+                ],
+              ),
+
+              // 标签
+              if (transaction.tags.isNotEmpty) ...[
+                const SizedBox(height: 12),
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 4,
+                  children: transaction.tags.map((tag) => Chip(
+                    label: Text(tag),
+                    labelStyle: theme.textTheme.bodySmall,
+                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  )).toList(),
+                ),
+              ],
+
+              // 备注
+              if (transaction.notes != null && transaction.notes!.isNotEmpty) ...[
+                const SizedBox(height: 8),
+                Text(
+                  transaction.notes!,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                    fontStyle: FontStyle.italic,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+
+              // 操作按钮
+              if (onEdit != null || onDelete != null) ...[
+                const SizedBox(height: 12),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    if (onEdit != null)
+                      IconButton(
+                        onPressed: onEdit,
+                        icon: const Icon(Icons.edit),
+                        iconSize: 20,
+                      ),
+                    if (onDelete != null)
+                      IconButton(
+                        onPressed: onDelete,
+                        icon: const Icon(Icons.delete),
+                        iconSize: 20,
+                      ),
+                  ],
+                ),
+              ],
             ],
           ),
         ),
@@ -282,7 +346,7 @@ class _InfoChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceVariant.withOpacity(0.5),
+        color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
         borderRadius: BorderRadius.circular(6),
       ),
       child: Column(
