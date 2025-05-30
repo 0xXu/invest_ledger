@@ -2,9 +2,12 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 
 import '../../providers/theme_provider.dart';
 import '../../providers/user_provider.dart';
+import '../../providers/color_theme_provider.dart';
+import '../../../data/models/color_theme_setting.dart';
 import '../dev/dev_tools_page.dart';
 
 class SettingsPage extends ConsumerWidget {
@@ -14,6 +17,7 @@ class SettingsPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final themeMode = ref.watch(themeProvider);
     final user = ref.watch(userProvider);
+    final colorTheme = ref.watch(colorThemeNotifierProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -94,6 +98,48 @@ class SettingsPage extends ConsumerWidget {
                           child: Text('深色模式'),
                         ),
                       ],
+                    ),
+                  ),
+                  const Divider(),
+                  ListTile(
+                    title: const Text('盈亏颜色'),
+                    subtitle: Text(colorTheme.colorScheme.description),
+                    trailing: DropdownButton<ProfitLossColorScheme>(
+                      value: colorTheme.colorScheme,
+                      onChanged: (ProfitLossColorScheme? newScheme) {
+                        if (newScheme != null) {
+                          ref.read(colorThemeNotifierProvider.notifier).setColorScheme(newScheme);
+                        }
+                      },
+                      items: ProfitLossColorScheme.values.map((scheme) {
+                        return DropdownMenuItem(
+                          value: scheme,
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Container(
+                                width: 12,
+                                height: 12,
+                                decoration: BoxDecoration(
+                                  color: scheme.profitColor,
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                              const SizedBox(width: 4),
+                              Container(
+                                width: 12,
+                                height: 12,
+                                decoration: BoxDecoration(
+                                  color: scheme.lossColor,
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Text(scheme.displayName),
+                            ],
+                          ),
+                        );
+                      }).toList(),
                     ),
                   ),
                 ],

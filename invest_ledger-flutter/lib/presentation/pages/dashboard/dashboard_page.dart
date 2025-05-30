@@ -8,6 +8,7 @@ import '../../../data/models/investment_goal.dart';
 import '../../providers/user_provider.dart';
 import '../../providers/transaction_provider.dart';
 import '../../providers/investment_goal_provider.dart';
+import '../../providers/color_theme_provider.dart';
 import '../../widgets/stock_investment_card.dart';
 import '../../widgets/goal_progress_card.dart';
 import '../../utils/loading_utils.dart';
@@ -21,9 +22,26 @@ class DashboardPage extends ConsumerWidget {
     final transactionsAsync = ref.watch(transactionNotifierProvider);
     final statsAsync = ref.watch(transactionStatsProvider);
 
+    // 如果用户未登录，显示错误信息
+    if (user == null) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('未登录')),
+        body: const Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.error, size: 64, color: Colors.red),
+              SizedBox(height: 16),
+              Text('用户未登录，请重新登录'),
+            ],
+          ),
+        ),
+      );
+    }
+
     return Scaffold(
       appBar: AppBar(
-        title: Text('投资概览 - ${user?.name ?? ''}'),
+        title: Text('投资概览 - ${user.name}'),
         actions: [
           IconButton(
             onPressed: () async {
@@ -141,101 +159,7 @@ class _DashboardContent extends ConsumerWidget {
 
           // 投资统计概览
           statsAsync.when(
-            data: (stats) => Column(
-              children: [
-                // 第一行：总盈利和总亏损
-                Row(
-                  children: [
-                    Expanded(
-                      child: _SummaryCard(
-                        title: '总盈利',
-                        value: '¥${((stats['totalProfit'] as num?)?.toDouble() ?? 0.0).toStringAsFixed(2)}',
-                        icon: LucideIcons.trendingUp,
-                        color: const Color(0xFF10B981),
-                        subtitle: '所有正收益之和',
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: _SummaryCard(
-                        title: '总亏损',
-                        value: '¥${((stats['totalLoss'] as num?)?.toDouble() ?? 0.0).toStringAsFixed(2)}',
-                        icon: LucideIcons.trendingDown,
-                        color: const Color(0xFFEF4444),
-                        subtitle: '所有负收益之和',
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                // 第二行：净收益和ROI
-                Row(
-                  children: [
-                    Expanded(
-                      child: _SummaryCard(
-                        title: '净收益',
-                        value: '${((stats['netProfit'] as num?)?.toDouble() ?? 0.0) >= 0 ? '+' : ''}¥${((stats['netProfit'] as num?)?.toDouble() ?? 0.0).toStringAsFixed(2)}',
-                        icon: ((stats['netProfit'] as num?)?.toDouble() ?? 0.0) >= 0 ? LucideIcons.plus : LucideIcons.minus,
-                        color: ((stats['netProfit'] as num?)?.toDouble() ?? 0.0) >= 0 ? const Color(0xFF10B981) : const Color(0xFFEF4444),
-                        subtitle: '盈利 - 亏损',
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: _SummaryCard(
-                        title: 'ROI',
-                        value: '${((stats['roi'] as num?)?.toDouble() ?? 0.0).toStringAsFixed(2)}%',
-                        icon: LucideIcons.percent,
-                        color: ((stats['roi'] as num?)?.toDouble() ?? 0.0) >= 0 ? const Color(0xFF10B981) : const Color(0xFFEF4444),
-                        subtitle: '投资回报率',
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                // 第三行：交易笔数和胜率
-                Row(
-                  children: [
-                    Expanded(
-                      child: _SummaryCard(
-                        title: '交易笔数',
-                        value: '${(stats['transactionCount'] as num?)?.toInt() ?? 0}',
-                        icon: LucideIcons.activity,
-                        color: const Color(0xFF8B5CF6),
-                        subtitle: '总交易数量',
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: _SummaryCard(
-                        title: '胜率',
-                        value: '${((stats['winRate'] as num?)?.toDouble() ?? 0.0).toStringAsFixed(1)}%',
-                        icon: LucideIcons.target,
-                        color: const Color(0xFF06B6D4),
-                        subtitle: '盈利笔数/总笔数',
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                // 第四行：盈亏比
-                Row(
-                  children: [
-                    Expanded(
-                      child: _SummaryCard(
-                        title: '盈亏比',
-                        value: ((stats['profitLossRatio'] as num?)?.toDouble() ?? 0.0).toStringAsFixed(2),
-                        icon: LucideIcons.scale,
-                        color: const Color(0xFFF59E0B),
-                        subtitle: '平均盈利/平均亏损',
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    const Expanded(child: SizedBox()), // 空白占位
-                  ],
-                ),
-              ],
-            ),
+            data: (stats) => _StatsSummary(stats: stats),
             loading: () => const Column(
               children: [
                 Row(
@@ -281,10 +205,7 @@ class _DashboardContent extends ConsumerWidget {
               child: StockInvestmentCard(
                 transaction: transaction,
                 onTap: () {
-                  // TODO: Navigate to transaction detail
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('查看交易详情: ${transaction.stockName}')),
-                  );
+                  context.push('/transactions/${transaction.id}');
                 },
               ),
             )),
@@ -316,6 +237,153 @@ class _DashboardContent extends ConsumerWidget {
             ref.invalidate(yearlyGoalProgressProvider);
           }
         },
+      ),
+    );
+  }
+}
+
+class _StatsSummary extends ConsumerWidget {
+  final Map<String, dynamic> stats;
+
+  const _StatsSummary({required this.stats});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final colorsAsync = ref.watch(profitLossColorsProvider);
+
+    return colorsAsync.when(
+      data: (colors) => Column(
+        children: [
+          // 第一行：总盈利和总亏损
+          Row(
+            children: [
+              Expanded(
+                child: _SummaryCard(
+                  title: '总盈利',
+                  value: '¥${((stats['totalProfit'] as num?)?.toDouble() ?? 0.0).toStringAsFixed(2)}',
+                  icon: LucideIcons.trendingUp,
+                  color: colors.getProfitColor(),
+                  subtitle: '所有正收益之和',
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _SummaryCard(
+                  title: '总亏损',
+                  value: '¥${((stats['totalLoss'] as num?)?.toDouble() ?? 0.0).toStringAsFixed(2)}',
+                  icon: LucideIcons.trendingDown,
+                  color: colors.getLossColor(),
+                  subtitle: '所有负收益之和',
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          // 第二行：净收益和ROI
+          Row(
+            children: [
+              Expanded(
+                child: _SummaryCard(
+                  title: '净收益',
+                  value: '${((stats['netProfit'] as num?)?.toDouble() ?? 0.0) >= 0 ? '+' : ''}¥${((stats['netProfit'] as num?)?.toDouble() ?? 0.0).toStringAsFixed(2)}',
+                  icon: ((stats['netProfit'] as num?)?.toDouble() ?? 0.0) >= 0 ? LucideIcons.plus : LucideIcons.minus,
+                  color: colors.getColorByValue(((stats['netProfit'] as num?)?.toDouble() ?? 0.0)),
+                  subtitle: '盈利 - 亏损',
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _SummaryCard(
+                  title: 'ROI',
+                  value: '${((stats['roi'] as num?)?.toDouble() ?? 0.0).toStringAsFixed(2)}%',
+                  icon: LucideIcons.percent,
+                  color: colors.getColorByValue(((stats['roi'] as num?)?.toDouble() ?? 0.0)),
+                  subtitle: '投资回报率',
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          // 第三行：交易笔数和胜率
+          Row(
+            children: [
+              Expanded(
+                child: _SummaryCard(
+                  title: '交易笔数',
+                  value: '${(stats['transactionCount'] as num?)?.toInt() ?? 0}',
+                  icon: LucideIcons.activity,
+                  color: const Color(0xFF8B5CF6),
+                  subtitle: '总交易数量',
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _SummaryCard(
+                  title: '胜率',
+                  value: '${((stats['winRate'] as num?)?.toDouble() ?? 0.0).toStringAsFixed(1)}%',
+                  icon: LucideIcons.target,
+                  color: const Color(0xFF06B6D4),
+                  subtitle: '盈利笔数/总笔数',
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          // 第四行：盈亏比
+          Row(
+            children: [
+              Expanded(
+                child: _SummaryCard(
+                  title: '盈亏比',
+                  value: ((stats['profitLossRatio'] as num?)?.toDouble() ?? 0.0).toStringAsFixed(2),
+                  icon: LucideIcons.scale,
+                  color: const Color(0xFFF59E0B),
+                  subtitle: '平均盈利/平均亏损',
+                ),
+              ),
+              const SizedBox(width: 12),
+              const Expanded(child: SizedBox()), // 空白占位
+            ],
+          ),
+        ],
+      ),
+      loading: () => const Column(
+        children: [
+          Row(
+            children: [
+              Expanded(child: Card(child: SizedBox(height: 100))),
+              SizedBox(width: 12),
+              Expanded(child: Card(child: SizedBox(height: 100))),
+            ],
+          ),
+          SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(child: Card(child: SizedBox(height: 100))),
+              SizedBox(width: 12),
+              Expanded(child: Card(child: SizedBox(height: 100))),
+            ],
+          ),
+        ],
+      ),
+      error: (_, __) => const Column(
+        children: [
+          Row(
+            children: [
+              Expanded(child: Card(child: SizedBox(height: 100))),
+              SizedBox(width: 12),
+              Expanded(child: Card(child: SizedBox(height: 100))),
+            ],
+          ),
+          SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(child: Card(child: SizedBox(height: 100))),
+              SizedBox(width: 12),
+              Expanded(child: Card(child: SizedBox(height: 100))),
+            ],
+          ),
+        ],
       ),
     );
   }

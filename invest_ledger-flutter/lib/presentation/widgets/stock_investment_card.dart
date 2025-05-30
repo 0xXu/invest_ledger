@@ -4,7 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:decimal/decimal.dart';
 
 import '../../data/models/transaction.dart';
-import '../../app/theme.dart';
+import '../providers/color_theme_provider.dart';
 
 class StockInvestmentCard extends ConsumerWidget {
   final Transaction transaction;
@@ -24,10 +24,19 @@ class StockInvestmentCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final customColors = theme.extension<CustomColors>()!;
+    final colorsAsync = ref.watch(profitLossColorsProvider);
 
-    final isProfit = transaction.profitLoss > Decimal.zero;
-    final profitColor = isProfit ? customColors.profit : customColors.loss;
+    return colorsAsync.when(
+      data: (colors) => _buildCard(context, theme, colorScheme, colors),
+      loading: () => _buildLoadingCard(context, theme, colorScheme),
+      error: (_, __) => _buildLoadingCard(context, theme, colorScheme),
+    );
+  }
+
+  Widget _buildCard(BuildContext context, ThemeData theme, ColorScheme colorScheme, colors) {
+    final profitLossValue = transaction.profitLoss.toDouble();
+    final profitColor = colors.getColorByValue(profitLossValue);
+    final isProfit = profitLossValue > 0;
 
     return Card(
       child: InkWell(
@@ -162,6 +171,82 @@ class StockInvestmentCard extends ConsumerWidget {
                   ],
                 ),
               ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLoadingCard(BuildContext context, ThemeData theme, ColorScheme colorScheme) {
+    return Card(
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // 标题行
+              Row(
+                children: [
+                  // 股票图标
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: colorScheme.primaryContainer,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Icon(
+                      Icons.trending_up,
+                      color: colorScheme.onPrimaryContainer,
+                      size: 20,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  // 股票信息
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '${transaction.stockName} (${transaction.stockCode})',
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        Text(
+                          '${transaction.amount.toStringAsFixed(0)}股 × ¥${transaction.unitPrice.toStringAsFixed(2)}',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  // 盈亏金额
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Text(
+                        '¥${transaction.profitLoss.toStringAsFixed(2)}',
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          color: Colors.grey,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      Text(
+                        DateFormat('MM/dd').format(transaction.date),
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              // 其他内容保持不变...
             ],
           ),
         ),

@@ -1,11 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lucide_icons/lucide_icons.dart';
+
+import '../../providers/transaction_provider.dart';
+import '../../providers/color_theme_provider.dart';
+import '../../widgets/charts/profit_loss_chart.dart';
+import '../../widgets/charts/stock_distribution_chart.dart';
 
 class AnalyticsPage extends ConsumerWidget {
   const AnalyticsPage({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final transactionsAsync = ref.watch(transactionNotifierProvider);
+    final statsAsync = ref.watch(transactionStatsProvider);
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('数据分析'),
@@ -13,13 +22,259 @@ class AnalyticsPage extends ConsumerWidget {
           IconButton(
             onPressed: () {
               // TODO: 导出报告
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('导出功能即将推出')),
+              );
             },
-            icon: const Icon(Icons.file_download),
+            icon: const Icon(LucideIcons.download),
+            tooltip: '导出报告',
+          ),
+          IconButton(
+            onPressed: () {
+              ref.invalidate(transactionNotifierProvider);
+              ref.invalidate(transactionStatsProvider);
+            },
+            icon: const Icon(LucideIcons.refreshCw),
+            tooltip: '刷新数据',
           ),
         ],
       ),
-      body: const Center(
-        child: Text('数据分析页面 - 开发中'),
+      body: transactionsAsync.when(
+        data: (transactions) => _AnalyticsContent(
+          transactions: transactions,
+          statsAsync: statsAsync,
+        ),
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (error, stack) => Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(LucideIcons.alertCircle, size: 64, color: Colors.red),
+              const SizedBox(height: 16),
+              Text('加载失败: $error'),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: () {
+                  ref.invalidate(transactionNotifierProvider);
+                  ref.invalidate(transactionStatsProvider);
+                },
+                child: const Text('重试'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _AnalyticsContent extends StatelessWidget {
+  final List<dynamic> transactions;
+  final AsyncValue<Map<String, dynamic>> statsAsync;
+
+  const _AnalyticsContent({
+    required this.transactions,
+    required this.statsAsync,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    if (transactions.isEmpty) {
+      return const Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              LucideIcons.barChart3,
+              size: 64,
+              color: Colors.grey,
+            ),
+            SizedBox(height: 16),
+            Text(
+              '暂无数据可分析',
+              style: TextStyle(fontSize: 18, color: Colors.grey),
+            ),
+            SizedBox(height: 8),
+            Text(
+              '添加一些交易记录后再来查看分析',
+              style: TextStyle(color: Colors.grey),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // 统计概览
+          statsAsync.when(
+            data: (stats) => _StatsOverview(stats: stats),
+            loading: () => const Card(
+              child: SizedBox(
+                height: 120,
+                child: Center(child: CircularProgressIndicator()),
+              ),
+            ),
+            error: (error, stack) => Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Text('统计数据加载失败: $error'),
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          // 月度盈亏趋势图
+          ProfitLossChart(
+            transactions: transactions.cast(),
+            title: '月度盈亏趋势',
+          ),
+          const SizedBox(height: 16),
+
+          // 股票投资分布图
+          StockDistributionChart(
+            transactions: transactions.cast(),
+            title: '股票投资分布',
+          ),
+        ],
+      ),
+    );
+  }
+
+}
+
+class _StatsOverview extends ConsumerWidget {
+  final Map<String, dynamic> stats;
+
+  const _StatsOverview({required this.stats});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final colorsAsync = ref.watch(profitLossColorsProvider);
+
+    return colorsAsync.when(
+      data: (colors) => Card(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                '投资概览',
+                style: theme.textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    child: _StatItem(
+                      label: '总盈利',
+                      value: '¥${((stats['totalProfit'] as num?)?.toDouble() ?? 0.0).toStringAsFixed(2)}',
+                      color: colors.getProfitColor(),
+                      icon: LucideIcons.trendingUp,
+                    ),
+                  ),
+                  Expanded(
+                    child: _StatItem(
+                      label: '总亏损',
+                      value: '¥${((stats['totalLoss'] as num?)?.toDouble() ?? 0.0).toStringAsFixed(2)}',
+                      color: colors.getLossColor(),
+                      icon: LucideIcons.trendingDown,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: _StatItem(
+                      label: '胜率',
+                      value: '${((stats['winRate'] as num?)?.toDouble() ?? 0.0).toStringAsFixed(1)}%',
+                      color: const Color(0xFF2196F3),
+                      icon: LucideIcons.target,
+                    ),
+                  ),
+                  Expanded(
+                    child: _StatItem(
+                      label: 'ROI',
+                      value: '${((stats['roi'] as num?)?.toDouble() ?? 0.0).toStringAsFixed(2)}%',
+                      color: colors.getColorByValue(((stats['roi'] as num?)?.toDouble() ?? 0.0)),
+                      icon: LucideIcons.percent,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+      loading: () => const Card(
+        child: SizedBox(
+          height: 120,
+          child: Center(child: CircularProgressIndicator()),
+        ),
+      ),
+      error: (_, __) => const Card(
+        child: SizedBox(
+          height: 120,
+          child: Center(child: Icon(Icons.error)),
+        ),
+      ),
+    );
+  }
+}
+
+class _StatItem extends StatelessWidget {
+  final String label;
+  final String value;
+  final Color color;
+  final IconData icon;
+
+  const _StatItem({
+    required this.label,
+    required this.value,
+    required this.color,
+    required this.icon,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      margin: const EdgeInsets.symmetric(horizontal: 4),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: color.withOpacity(0.3)),
+      ),
+      child: Column(
+        children: [
+          Icon(icon, color: color, size: 24),
+          const SizedBox(height: 8),
+          Text(
+            label,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            style: theme.textTheme.titleMedium?.copyWith(
+              color: color,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -266,10 +266,43 @@ class _AddTransactionPageState extends ConsumerState<AddTransactionPage> {
       await ref.read(transactionNotifierProvider.notifier).addTransaction(transaction);
 
       if (mounted) {
+        // 显示成功提示
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('交易添加成功')),
+          const SnackBar(
+            content: Text('交易添加成功'),
+            backgroundColor: Colors.green,
+            duration: Duration(seconds: 2),
+          ),
         );
-        context.pop();
+
+        // 询问用户是否跳转到交易记录页面
+        final shouldNavigateToTransactions = await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('添加成功'),
+            content: const Text('交易记录已成功添加。是否查看交易记录？'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                child: const Text('返回仪表盘'),
+              ),
+              ElevatedButton(
+                onPressed: () => Navigator.of(context).pop(true),
+                child: const Text('查看交易记录'),
+              ),
+            ],
+          ),
+        );
+
+        if (mounted) {
+          if (shouldNavigateToTransactions == true) {
+            // 跳转到交易记录页面
+            context.go('/transactions');
+          } else {
+            // 返回仪表盘
+            context.go('/dashboard');
+          }
+        }
       }
     } catch (e) {
       if (mounted) {

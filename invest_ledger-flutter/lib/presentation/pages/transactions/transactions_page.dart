@@ -6,6 +6,7 @@ import '../../../data/models/transaction.dart';
 
 import '../../providers/transaction_provider.dart';
 import '../../widgets/stock_investment_card.dart';
+import '../../utils/loading_utils.dart';
 
 class TransactionsPage extends ConsumerWidget {
   const TransactionsPage({super.key});
@@ -20,21 +21,10 @@ class TransactionsPage extends ConsumerWidget {
         actions: [
           IconButton(
             onPressed: () {
-              // TODO: 搜索功能
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('搜索功能即将推出')),
-              );
+              context.push('/transactions/search');
             },
             icon: const Icon(Icons.search),
-          ),
-          IconButton(
-            onPressed: () {
-              // TODO: 筛选功能
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('筛选功能即将推出')),
-              );
-            },
-            icon: const Icon(Icons.filter_list),
+            tooltip: '搜索交易',
           ),
           IconButton(
             onPressed: () {
@@ -111,16 +101,10 @@ class _TransactionsList extends StatelessWidget {
           child: StockInvestmentCard(
             transaction: transaction,
             onTap: () {
-              // TODO: 导航到交易详情页面
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('查看交易详情: ${transaction.stockName}')),
-              );
+              context.push('/transactions/${transaction.id}');
             },
             onEdit: () {
-              // TODO: 导航到编辑交易页面
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('编辑交易: ${transaction.stockName}')),
-              );
+              context.push('/transactions/edit/${transaction.id}');
             },
             onDelete: () {
               _showDeleteDialog(context, transaction);
@@ -134,25 +118,46 @@ class _TransactionsList extends StatelessWidget {
   void _showDeleteDialog(BuildContext context, Transaction transaction) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('删除交易'),
-        content: Text('确定要删除这笔交易吗？\n\n${transaction.stockName} (${transaction.stockCode})'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('取消'),
-          ),
-          FilledButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-              // TODO: 实现删除功能
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('删除功能即将推出')),
-              );
-            },
-            child: const Text('删除'),
-          ),
-        ],
+      builder: (context) => Consumer(
+        builder: (context, ref, child) => AlertDialog(
+          title: const Text('删除交易'),
+          content: Text('确定要删除这笔交易吗？此操作无法撤销。\n\n${transaction.stockName} (${transaction.stockCode})'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('取消'),
+            ),
+            FilledButton(
+              onPressed: () async {
+                Navigator.of(context).pop();
+
+                try {
+                  await ref.withLoading(() async {
+                    await ref.read(transactionNotifierProvider.notifier)
+                        .deleteTransaction(transaction.id!);
+                  }, '正在删除交易记录...');
+
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('交易记录已删除')),
+                    );
+                  }
+                } catch (e) {
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('删除失败: $e')),
+                    );
+                  }
+                }
+              },
+              style: FilledButton.styleFrom(
+                backgroundColor: Colors.red,
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('删除'),
+            ),
+          ],
+        ),
       ),
     );
   }
