@@ -1,4 +1,5 @@
 import '../models/ai_analysis_result.dart';
+import '../models/ai_config.dart';
 import '../datasources/local/ai_suggestion_dao.dart';
 import '../services/ai_service.dart';
 
@@ -12,12 +13,16 @@ class AISuggestionRepository {
     bool showReasoning = false,
     double initialCapital = 100000,
     int numOfNews = 5,
+    String? startDate,
+    String? endDate,
   }) async {
     return await _aiService.analyzeStock(
       stockCode: stockCode,
       showReasoning: showReasoning,
       initialCapital: initialCapital,
       numOfNews: numOfNews,
+      startDate: startDate,
+      endDate: endDate,
     );
   }
 
@@ -106,6 +111,39 @@ class AISuggestionRepository {
   }
 
   Future<void> resetAIServiceUrl() async {
+    await _aiService.resetToDefault();
+  }
+
+  // API Key 配置方法
+  Future<AIConfig> getAIConfig() async {
+    return AIConfig(
+      baseUrl: await _aiService.baseUrl,
+      geminiApiKey: await _aiService.getGeminiApiKey(),
+      geminiModel: await _aiService.getGeminiModel(),
+      openaiApiKey: await _aiService.getOpenAIApiKey(),
+      openaiBaseUrl: await _aiService.getOpenAIBaseUrl(),
+      openaiModel: await _aiService.getOpenAIModel(),
+    );
+  }
+
+  Future<void> updateAIConfig(AIConfig config) async {
+    await _aiService.setBaseUrl(config.baseUrl);
+
+    if (config.geminiApiKey != null) {
+      await _aiService.setGeminiApiKey(config.geminiApiKey!);
+    }
+    await _aiService.setGeminiModel(config.geminiModel);
+
+    if (config.openaiApiKey != null) {
+      await _aiService.setOpenAIApiKey(config.openaiApiKey!);
+    }
+    if (config.openaiBaseUrl != null) {
+      await _aiService.setOpenAIBaseUrl(config.openaiBaseUrl!);
+    }
+    await _aiService.setOpenAIModel(config.openaiModel);
+  }
+
+  Future<void> resetAIConfig() async {
     await _aiService.resetToDefault();
   }
 

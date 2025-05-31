@@ -22,6 +22,9 @@ import '../presentation/pages/ai_assistant/ai_assistant_page.dart';
 import '../presentation/pages/ai_assistant/stock_analysis_page.dart';
 import '../presentation/pages/ai_assistant/ai_suggestions_page.dart';
 import '../presentation/pages/ai_assistant/suggestion_detail_page.dart';
+import '../presentation/pages/ai_analysis/ai_analysis_page.dart';
+import '../presentation/pages/ai_analysis/ai_config_page.dart';
+import '../presentation/pages/ai_analysis/analysis_history_page.dart';
 import '../presentation/widgets/main_layout.dart';
 
 
@@ -136,6 +139,11 @@ final routerProvider = Provider<GoRouter>((ref) {
                 builder: (context, state) => const StockAnalysisPage(),
               ),
               GoRoute(
+                path: 'analysis',
+                name: 'ai-analysis',
+                builder: (context, state) => const AIAnalysisPage(),
+              ),
+              GoRoute(
                 path: 'suggestions',
                 name: 'ai-suggestions',
                 builder: (context, state) => const AISuggestionsPage(),
@@ -147,6 +155,16 @@ final routerProvider = Provider<GoRouter>((ref) {
                   final id = state.pathParameters['id']!;
                   return SuggestionDetailPage(suggestionId: id);
                 },
+              ),
+              GoRoute(
+                path: 'config',
+                name: 'ai-config',
+                builder: (context, state) => const AIConfigPage(),
+              ),
+              GoRoute(
+                path: 'history',
+                name: 'ai-history',
+                builder: (context, state) => const AnalysisHistoryPage(),
               ),
             ],
           ),

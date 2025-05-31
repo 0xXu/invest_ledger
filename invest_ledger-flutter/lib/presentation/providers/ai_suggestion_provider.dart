@@ -43,6 +43,8 @@ class StockAnalysisNotifier extends StateNotifier<AsyncValue<AIAnalysisResult?>>
     bool showReasoning = false,
     double initialCapital = 100000,
     int numOfNews = 5,
+    String? startDate,
+    String? endDate,
   }) async {
     state = const AsyncValue.loading();
 
@@ -52,6 +54,8 @@ class StockAnalysisNotifier extends StateNotifier<AsyncValue<AIAnalysisResult?>>
         showReasoning: showReasoning,
         initialCapital: initialCapital,
         numOfNews: numOfNews,
+        startDate: startDate,
+        endDate: endDate,
       );
       state = AsyncValue.data(result);
     } catch (error, stackTrace) {
@@ -235,3 +239,4 @@ final aiServiceConfigNotifierProvider = StateNotifierProvider<AIServiceConfigNot
   final repository = ref.read(aiSuggestionRepositoryProvider);
   return AIServiceConfigNotifier(repository, ref);
 });
+
