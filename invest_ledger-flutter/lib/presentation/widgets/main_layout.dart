@@ -65,6 +65,11 @@ class _DesktopLayout extends ConsumerWidget {
                 label: Text('分析'),
               ),
               NavigationRailDestination(
+                icon: Icon(LucideIcons.bot),
+                selectedIcon: Icon(LucideIcons.bot),
+                label: Text('AI助手'),
+              ),
+              NavigationRailDestination(
                 icon: Icon(LucideIcons.settings),
                 selectedIcon: Icon(LucideIcons.settings),
                 label: Text('设置'),
@@ -91,8 +96,10 @@ class _DesktopLayout extends ConsumerWidget {
       newIndex = 2;
     } else if (location.startsWith('/analytics')) {
       newIndex = 3;
-    } else if (location.startsWith('/settings')) {
+    } else if (location.startsWith('/ai-assistant')) {
       newIndex = 4;
+    } else if (location.startsWith('/settings')) {
+      newIndex = 5;
     }
 
     // 只有当索引不同时才更新，避免无限循环和不必要的重建
@@ -122,6 +129,9 @@ class _DesktopLayout extends ConsumerWidget {
         context.go('/analytics');
         break;
       case 4:
+        context.go('/ai-assistant');
+        break;
+      case 5:
         context.go('/settings');
         break;
     }
@@ -170,6 +180,11 @@ class _MobileLayout extends ConsumerWidget {
             label: '分析',
           ),
           NavigationDestination(
+            icon: Icon(LucideIcons.bot),
+            selectedIcon: Icon(LucideIcons.bot),
+            label: 'AI助手',
+          ),
+          NavigationDestination(
             icon: Icon(LucideIcons.settings),
             selectedIcon: Icon(LucideIcons.settings),
             label: '设置',
@@ -191,8 +206,10 @@ class _MobileLayout extends ConsumerWidget {
       newIndex = 2;
     } else if (location.startsWith('/analytics')) {
       newIndex = 3;
-    } else if (location.startsWith('/settings')) {
+    } else if (location.startsWith('/ai-assistant')) {
       newIndex = 4;
+    } else if (location.startsWith('/settings')) {
+      newIndex = 5;
     }
 
     // 只有当索引不同时才更新，避免无限循环和不必要的重建
@@ -222,6 +239,9 @@ class _MobileLayout extends ConsumerWidget {
         context.go('/analytics');
         break;
       case 4:
+        context.go('/ai-assistant');
+        break;
+      case 5:
         context.go('/settings');
         break;
     }

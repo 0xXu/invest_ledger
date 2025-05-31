@@ -433,7 +433,6 @@ class _EditSharedInvestmentPageState extends ConsumerState<EditSharedInvestmentP
               controller: _sellAmountController,
               decoration: const InputDecoration(
                 labelText: '卖出总金额',
-                hintText: '输入卖出总金额（可选）',
                 prefixIcon: Icon(LucideIcons.dollarSign),
                 prefixText: '¥',
               ),

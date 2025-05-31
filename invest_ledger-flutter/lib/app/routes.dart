@@ -126,6 +126,31 @@ final routerProvider = Provider<GoRouter>((ref) {
             builder: (context, state) => const ImportExportPage(),
           ),
           GoRoute(
+            path: '/ai-assistant',
+            name: 'ai-assistant',
+            builder: (context, state) => const AIAssistantPage(),
+            routes: [
+              GoRoute(
+                path: 'stock-analysis',
+                name: 'stock-analysis',
+                builder: (context, state) => const StockAnalysisPage(),
+              ),
+              GoRoute(
+                path: 'suggestions',
+                name: 'ai-suggestions',
+                builder: (context, state) => const AISuggestionsPage(),
+              ),
+              GoRoute(
+                path: 'suggestion/:id',
+                name: 'suggestion-detail',
+                builder: (context, state) {
+                  final id = state.pathParameters['id']!;
+                  return SuggestionDetailPage(suggestionId: id);
+                },
+              ),
+            ],
+          ),
+          GoRoute(
             path: '/test/refresh-button',
             name: 'refresh-button-test',
             builder: (context, state) => const RefreshButtonTestPage(),

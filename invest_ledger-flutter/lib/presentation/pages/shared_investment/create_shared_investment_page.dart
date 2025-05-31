@@ -153,7 +153,6 @@ class _CreateSharedInvestmentPageState extends ConsumerState<CreateSharedInvestm
               controller: _nameController,
               decoration: const InputDecoration(
                 labelText: '投资名称',
-                hintText: '例如：小组投资茅台',
                 prefixIcon: Icon(LucideIcons.tag),
               ),
               validator: (value) {
@@ -174,7 +173,6 @@ class _CreateSharedInvestmentPageState extends ConsumerState<CreateSharedInvestm
                     controller: _stockCodeController,
                     decoration: const InputDecoration(
                       labelText: '股票代码',
-                      hintText: '600519',
                       prefixIcon: Icon(LucideIcons.hash),
                     ),
                     validator: (value) {
@@ -192,7 +190,6 @@ class _CreateSharedInvestmentPageState extends ConsumerState<CreateSharedInvestm
                     controller: _stockNameController,
                     decoration: const InputDecoration(
                       labelText: '股票名称',
-                      hintText: '贵州茅台',
                       prefixIcon: Icon(LucideIcons.building),
                     ),
                     validator: (value) {
@@ -296,7 +293,6 @@ class _CreateSharedInvestmentPageState extends ConsumerState<CreateSharedInvestm
                           TextFormField(
                             controller: _sellPriceController,
                             decoration: const InputDecoration(
-                              hintText: '120.00',
                               prefixText: '¥',
                               isDense: true,
                               border: InputBorder.none,
@@ -669,7 +665,6 @@ class _CreateSharedInvestmentPageState extends ConsumerState<CreateSharedInvestm
                     initialValue: participant.buyPrice,
                     decoration: const InputDecoration(
                       labelText: '买入价格',
-                      hintText: '100.00',
                       prefixText: '¥',
                       isDense: true,
                     ),
@@ -695,7 +690,6 @@ class _CreateSharedInvestmentPageState extends ConsumerState<CreateSharedInvestm
                     initialValue: participant.shares,
                     decoration: const InputDecoration(
                       labelText: '股数',
-                      hintText: '100',
                       suffixText: '股',
                       isDense: true,
                     ),

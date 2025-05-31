@@ -4,7 +4,7 @@ import 'package:path/path.dart';
 
 class DatabaseHelper {
   static const String _databaseName = 'invest_ledger.db';
-  static const int _databaseVersion = 2;
+  static const int _databaseVersion = 3;
 
   static Database? _database;
 
@@ -61,6 +61,28 @@ class DatabaseHelper {
 
       await db.execute('CREATE INDEX idx_investment_goals_user_id ON investment_goals(user_id)');
       await db.execute('CREATE INDEX idx_investment_goals_period ON investment_goals(user_id, type, period, year, month)');
+    }
+
+    if (oldVersion < 3) {
+      // 添加AI建议表
+      await db.execute('''
+        CREATE TABLE ai_suggestions (
+          id TEXT PRIMARY KEY,
+          user_id TEXT NOT NULL,
+          analysis_data TEXT NOT NULL,
+          created_at TEXT NOT NULL,
+          executed_at TEXT,
+          transaction_id TEXT,
+          status TEXT NOT NULL DEFAULT 'pending',
+          user_notes TEXT,
+          FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
+          FOREIGN KEY (transaction_id) REFERENCES transactions (id) ON DELETE SET NULL
+        )
+      ''');
+
+      await db.execute('CREATE INDEX idx_ai_suggestions_user_id ON ai_suggestions(user_id)');
+      await db.execute('CREATE INDEX idx_ai_suggestions_status ON ai_suggestions(user_id, status)');
+      await db.execute('CREATE INDEX idx_ai_suggestions_created_at ON ai_suggestions(created_at)');
     }
   }
 
@@ -164,12 +186,31 @@ class DatabaseHelper {
       )
     ''');
 
+    // AI建议表
+    await db.execute('''
+      CREATE TABLE ai_suggestions (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        analysis_data TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        executed_at TEXT,
+        transaction_id TEXT,
+        status TEXT NOT NULL DEFAULT 'pending',
+        user_notes TEXT,
+        FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
+        FOREIGN KEY (transaction_id) REFERENCES transactions (id) ON DELETE SET NULL
+      )
+    ''');
+
     // 创建索引
     await db.execute('CREATE INDEX idx_transactions_user_id ON transactions(user_id)');
     await db.execute('CREATE INDEX idx_transactions_date ON transactions(date)');
     await db.execute('CREATE INDEX idx_transactions_stock_code ON transactions(stock_code)');
     await db.execute('CREATE INDEX idx_investment_goals_user_id ON investment_goals(user_id)');
     await db.execute('CREATE INDEX idx_investment_goals_period ON investment_goals(user_id, type, period, year, month)');
+    await db.execute('CREATE INDEX idx_ai_suggestions_user_id ON ai_suggestions(user_id)');
+    await db.execute('CREATE INDEX idx_ai_suggestions_status ON ai_suggestions(user_id, status)');
+    await db.execute('CREATE INDEX idx_ai_suggestions_created_at ON ai_suggestions(created_at)');
   }
 
   static Future<void> close() async {
