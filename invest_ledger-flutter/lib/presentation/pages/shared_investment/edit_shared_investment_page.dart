@@ -240,7 +240,7 @@ class _EditSharedInvestmentPageState extends ConsumerState<EditSharedInvestmentP
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: Colors.blue.withAlpha(25),
+                    color: Colors.blue.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: const Icon(
@@ -294,7 +294,7 @@ class _EditSharedInvestmentPageState extends ConsumerState<EditSharedInvestmentP
               CircleAvatar(
                 backgroundColor: theme.colorScheme.primary,
                 child: Text(
-                  participant.userName.isNotEmpty 
+                  participant.userName.isNotEmpty
                       ? participant.userName[0].toUpperCase()
                       : '?',
                   style: TextStyle(
@@ -327,7 +327,7 @@ class _EditSharedInvestmentPageState extends ConsumerState<EditSharedInvestmentP
             ],
           ),
           const SizedBox(height: 12),
-          
+
           TextFormField(
             controller: profitLossController,
             decoration: const InputDecoration(
@@ -360,7 +360,7 @@ class _EditSharedInvestmentPageState extends ConsumerState<EditSharedInvestmentP
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: Colors.orange.withAlpha(25),
+                    color: Colors.orange.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: const Icon(
@@ -409,7 +409,7 @@ class _EditSharedInvestmentPageState extends ConsumerState<EditSharedInvestmentP
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: Colors.green.withAlpha(25),
+                    color: Colors.green.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: const Icon(
@@ -469,8 +469,8 @@ class _EditSharedInvestmentPageState extends ConsumerState<EditSharedInvestmentP
         name: _nameController.text.trim(),
         stockCode: _stockCodeController.text.trim(),
         stockName: _stockNameController.text.trim(),
-        notes: _notesController.text.trim().isNotEmpty 
-            ? _notesController.text.trim() 
+        notes: _notesController.text.trim().isNotEmpty
+            ? _notesController.text.trim()
             : null,
         sellAmount: sellAmount,
         totalAmount: totalAmount,

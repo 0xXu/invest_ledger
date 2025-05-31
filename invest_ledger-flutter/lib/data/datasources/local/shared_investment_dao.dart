@@ -1,5 +1,3 @@
-import 'dart:convert';
-import 'package:uuid/uuid.dart';
 import 'package:decimal/decimal.dart';
 
 import '../../models/shared_investment.dart';
@@ -51,7 +49,7 @@ class SharedInvestmentDao {
 
   Future<SharedInvestment?> getSharedInvestmentById(String id) async {
     final db = await DatabaseHelper.database;
-    
+
     // 获取共享投资基本信息
     final maps = await db.query(
       _tableName,
@@ -73,12 +71,12 @@ class SharedInvestmentDao {
 
   Future<List<SharedInvestment>> getAllSharedInvestments() async {
     final db = await DatabaseHelper.database;
-    
+
     // 获取所有共享投资
     final maps = await db.query(_tableName, orderBy: 'created_date DESC');
-    
+
     final List<SharedInvestment> sharedInvestments = [];
-    
+
     for (final map in maps) {
       // 获取每个共享投资的参与者
       final participantMaps = await db.query(
@@ -86,45 +84,45 @@ class SharedInvestmentDao {
         where: 'shared_investment_id = ?',
         whereArgs: [map['id']],
       );
-      
+
       sharedInvestments.add(_mapToSharedInvestment(map, participantMaps));
     }
-    
+
     return sharedInvestments;
   }
 
   Future<List<SharedInvestment>> getSharedInvestmentsByUserId(String userId) async {
     final db = await DatabaseHelper.database;
-    
+
     // 通过参与者表查找用户参与的共享投资
     final participantMaps = await db.query(
       _participantsTableName,
       where: 'user_id = ?',
       whereArgs: [userId],
     );
-    
+
     final Set<String> sharedInvestmentIds = participantMaps
         .map((map) => map['shared_investment_id'] as String)
         .toSet();
-    
+
     final List<SharedInvestment> sharedInvestments = [];
-    
+
     for (final id in sharedInvestmentIds) {
       final sharedInvestment = await getSharedInvestmentById(id);
       if (sharedInvestment != null) {
         sharedInvestments.add(sharedInvestment);
       }
     }
-    
+
     // 按创建时间排序
     sharedInvestments.sort((a, b) => b.createdDate.compareTo(a.createdDate));
-    
+
     return sharedInvestments;
   }
 
   Future<void> updateSharedInvestment(SharedInvestment sharedInvestment) async {
     final db = await DatabaseHelper.database;
-    
+
     await db.transaction((txn) async {
       // 更新共享投资基本信息
       await txn.update(
@@ -170,7 +168,7 @@ class SharedInvestmentDao {
 
   Future<void> deleteSharedInvestment(String id) async {
     final db = await DatabaseHelper.database;
-    
+
     await db.transaction((txn) async {
       // 删除参与者记录
       await txn.delete(
@@ -178,7 +176,7 @@ class SharedInvestmentDao {
         where: 'shared_investment_id = ?',
         whereArgs: [id],
       );
-      
+
       // 删除共享投资记录
       await txn.delete(
         _tableName,
@@ -213,11 +211,11 @@ class SharedInvestmentDao {
       totalAmount: Decimal.parse(map['total_amount']),
       totalShares: Decimal.parse(map['total_shares']),
       initialPrice: Decimal.parse(map['initial_price']),
-      currentPrice: map['current_price'] != null 
-          ? Decimal.parse(map['current_price']) 
+      currentPrice: map['current_price'] != null
+          ? Decimal.parse(map['current_price'])
           : null,
-      sellAmount: map['sell_amount'] != null 
-          ? Decimal.parse(map['sell_amount']) 
+      sellAmount: map['sell_amount'] != null
+          ? Decimal.parse(map['sell_amount'])
           : null,
       createdDate: DateTime.parse(map['created_date']),
       status: SharedInvestmentStatus.values.firstWhere(

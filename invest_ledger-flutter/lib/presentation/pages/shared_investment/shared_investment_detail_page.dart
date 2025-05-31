@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:intl/intl.dart';
-import 'package:decimal/decimal.dart';
 
 import '../../../data/models/shared_investment.dart';
 import '../../../data/models/color_theme_setting.dart';

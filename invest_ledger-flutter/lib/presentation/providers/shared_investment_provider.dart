@@ -6,7 +6,6 @@ import '../../data/models/shared_investment.dart';
 import '../../data/models/transaction.dart';
 import '../../data/datasources/local/shared_investment_dao.dart';
 import '../../data/repositories/shared_investment_repository.dart';
-import '../../data/repositories/transaction_repository.dart';
 import 'user_provider.dart';
 import 'transaction_provider.dart';
 

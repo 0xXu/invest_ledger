@@ -1,7 +1,6 @@
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../presentation/providers/user_provider.dart';
 import '../presentation/pages/dashboard/dashboard_page.dart';
 import '../presentation/pages/transactions/transactions_page.dart';
 import '../presentation/pages/transactions/add_transaction_page.dart';
@@ -19,6 +18,10 @@ import '../presentation/pages/auth/user_selection_page.dart';
 import '../presentation/pages/auth/splash_page.dart';
 import '../presentation/pages/test/refresh_button_test_page.dart';
 import '../presentation/pages/dev/dev_tools_page.dart';
+import '../presentation/pages/ai_assistant/ai_assistant_page.dart';
+import '../presentation/pages/ai_assistant/stock_analysis_page.dart';
+import '../presentation/pages/ai_assistant/ai_suggestions_page.dart';
+import '../presentation/pages/ai_assistant/suggestion_detail_page.dart';
 import '../presentation/widgets/main_layout.dart';
 
 

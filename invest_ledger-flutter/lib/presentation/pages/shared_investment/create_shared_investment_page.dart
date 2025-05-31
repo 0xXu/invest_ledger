@@ -6,7 +6,6 @@ import 'package:uuid/uuid.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
 import '../../../data/models/shared_investment.dart';
-import '../../../data/models/user.dart';
 import '../../providers/shared_investment_provider.dart';
 import '../../providers/user_provider.dart';
 import '../../widgets/user_selector_dialog.dart';
