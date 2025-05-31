@@ -148,6 +148,33 @@ class SettingsPage extends ConsumerWidget {
           ),
           const SizedBox(height: 16),
 
+          // 数据管理
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '数据管理',
+                    style: Theme.of(context).textTheme.titleLarge,
+                  ),
+                  const SizedBox(height: 16),
+                  ListTile(
+                    leading: const Icon(LucideIcons.database),
+                    title: const Text('导入导出'),
+                    subtitle: const Text('备份和恢复数据'),
+                    trailing: const Icon(LucideIcons.chevronRight),
+                    onTap: () {
+                      context.go('/import-export');
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+
           // 开发工具 (仅在调试模式下显示)
           if (kDebugMode)
             Card(

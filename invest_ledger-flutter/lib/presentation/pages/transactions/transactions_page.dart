@@ -113,13 +113,13 @@ class _TransactionsList extends StatelessWidget {
       itemCount: transactions.length,
       itemBuilder: (context, index) {
         final transaction = transactions[index];
-        return SmartAnimatedCard(
-          initialDelay: Duration(milliseconds: index * 50), // 初始错开动画
-          animationType: CardAnimationType.fadeSlideIn,
-          slideDirection: SlideDirection.fromRight,
-          enableScrollAnimation: true, // 启用滚动动画
-          enableInitialAnimation: index < 10, // 只对前10个启用初始动画
-          visibilityThreshold: 0.1,
+        return AnimatedCard.fadeSlideIn(
+          delay: Duration(milliseconds: index * 30), // 减少延迟时间，更流畅
+          duration: const Duration(milliseconds: 400), // 缩短动画时间
+          curve: Curves.easeOutQuart, // 使用更流畅的曲线
+          enableAnimation: true, // 所有卡片都启用动画
+          enableScrollVisibility: false, // 完全禁用滚动可见性检测
+          slideDirection: SlideDirection.fromBottom, // 从下方滑入更自然
           child: Padding(
             padding: const EdgeInsets.only(bottom: 8),
             child: StockInvestmentCard(

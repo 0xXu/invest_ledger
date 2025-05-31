@@ -9,8 +9,10 @@ import '../presentation/pages/transactions/transaction_detail_page.dart';
 import '../presentation/pages/transactions/edit_transaction_page.dart';
 import '../presentation/pages/transactions/search_transactions_page.dart';
 import '../presentation/pages/shared_investment/shared_investment_page.dart';
+import '../presentation/pages/shared_investment/create_shared_investment_page.dart';
 import '../presentation/pages/analytics/analytics_page.dart';
 import '../presentation/pages/settings/settings_page.dart';
+import '../presentation/pages/import_export/import_export_page.dart';
 import '../presentation/pages/auth/user_selection_page.dart';
 import '../presentation/pages/auth/splash_page.dart';
 import '../presentation/pages/test/refresh_button_test_page.dart';
@@ -77,6 +79,13 @@ final routerProvider = Provider<GoRouter>((ref) {
             path: '/shared-investment',
             name: 'shared-investment',
             builder: (context, state) => const SharedInvestmentPage(),
+            routes: [
+              GoRoute(
+                path: 'create',
+                name: 'create-shared-investment',
+                builder: (context, state) => const CreateSharedInvestmentPage(),
+              ),
+            ],
           ),
           GoRoute(
             path: '/analytics',
@@ -87,6 +96,11 @@ final routerProvider = Provider<GoRouter>((ref) {
             path: '/settings',
             name: 'settings',
             builder: (context, state) => const SettingsPage(),
+          ),
+          GoRoute(
+            path: '/import-export',
+            name: 'import-export',
+            builder: (context, state) => const ImportExportPage(),
           ),
           GoRoute(
             path: '/test/refresh-button',
