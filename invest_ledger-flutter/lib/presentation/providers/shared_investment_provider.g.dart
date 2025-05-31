@@ -510,7 +510,7 @@ final allSharedInvestmentsProvider =
 typedef AllSharedInvestmentsRef
     = AutoDisposeFutureProviderRef<List<SharedInvestment>>;
 String _$sharedInvestmentNotifierHash() =>
-    r'6da361245d6abf34e2b1f3a269812a13cf0b68c5';
+    r'c65898f23fe7cfc60b5c31a7818488d7c8fe0e0d';
 
 /// See also [SharedInvestmentNotifier].
 @ProviderFor(SharedInvestmentNotifier)

@@ -160,6 +160,75 @@ class SharedInvestmentNotifier extends _$SharedInvestmentNotifier {
       ref.invalidateSelf();
     }
   }
+
+  /// 完成共享投资（带自定义盈亏分配）
+  Future<void> completeSharedInvestmentWithCustomProfitLoss(
+    String id,
+    Decimal? sellAmount,
+    Map<String, Decimal> participantProfitLoss,
+  ) async {
+    final repository = ref.read(sharedInvestmentRepositoryProvider);
+    final transactionRepository = ref.read(transactionRepositoryProvider);
+    final sharedInvestment = await repository.getSharedInvestmentById(id);
+
+    if (sharedInvestment != null) {
+      // 更新参与者盈亏
+      final updatedParticipants = sharedInvestment.participants.map((participant) {
+        final profitLoss = participantProfitLoss[participant.id] ?? participant.profitLoss;
+        return participant.copyWith(profitLoss: profitLoss);
+      }).toList();
+
+      final updatedSharedInvestment = sharedInvestment.copyWith(
+        sellAmount: sellAmount ?? sharedInvestment.sellAmount,
+        status: SharedInvestmentStatus.completed,
+        participants: updatedParticipants,
+      );
+
+      await repository.updateSharedInvestment(updatedSharedInvestment);
+
+      // 更新相关的交易记录
+      for (final participant in updatedParticipants) {
+        final transactions = await transactionRepository.getTransactionsBySharedInvestmentId(id);
+        final userTransaction = transactions.where((t) => t.userId == participant.userId).firstOrNull;
+
+        if (userTransaction != null) {
+          final updatedTransaction = userTransaction.copyWith(
+            profitLoss: participant.profitLoss,
+            updatedAt: DateTime.now(),
+          );
+          await transactionRepository.updateTransaction(updatedTransaction);
+        }
+      }
+
+      ref.invalidateSelf();
+      ref.invalidate(transactionNotifierProvider);
+    }
+  }
+
+  /// 取消共享投资
+  Future<void> cancelSharedInvestment(String id, {String? reason}) async {
+    final repository = ref.read(sharedInvestmentRepositoryProvider);
+    await repository.cancelSharedInvestment(id, reason: reason);
+    ref.invalidateSelf();
+  }
+
+  /// 更新共享投资状态
+  Future<void> updateSharedInvestmentStatus(String id, SharedInvestmentStatus status) async {
+    final repository = ref.read(sharedInvestmentRepositoryProvider);
+    await repository.updateSharedInvestmentStatus(id, status);
+    ref.invalidateSelf();
+  }
+
+  /// 更新参与者盈亏
+  Future<void> updateParticipantProfitLoss(
+    String sharedInvestmentId,
+    String participantId,
+    Decimal profitLoss,
+  ) async {
+    final repository = ref.read(sharedInvestmentRepositoryProvider);
+    await repository.updateParticipantProfitLoss(sharedInvestmentId, participantId, profitLoss);
+    ref.invalidateSelf();
+  }
 }
 
 // Individual shared investment provider

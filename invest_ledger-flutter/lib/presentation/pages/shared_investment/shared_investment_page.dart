@@ -23,6 +23,15 @@ class _SharedInvestmentPageState extends ConsumerState<SharedInvestmentPage>
   @override
   bool get wantKeepAlive => true;
 
+  String _searchQuery = '';
+  final TextEditingController _searchController = TextEditingController();
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     super.build(context);
@@ -33,12 +42,7 @@ class _SharedInvestmentPageState extends ConsumerState<SharedInvestmentPage>
         title: const Text('共享投资'),
         actions: [
           IconButton(
-            onPressed: () {
-              // TODO: 搜索功能
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('搜索功能即将推出')),
-              );
-            },
+            onPressed: () => _showSearchDialog(context),
             icon: const Icon(LucideIcons.search),
             tooltip: '搜索共享投资',
           ),
@@ -52,9 +56,12 @@ class _SharedInvestmentPageState extends ConsumerState<SharedInvestmentPage>
         ],
       ),
       body: sharedInvestmentsAsync.when(
-        data: (sharedInvestments) => _SharedInvestmentsList(
-          sharedInvestments: sharedInvestments,
-        ),
+        data: (sharedInvestments) {
+          final filteredInvestments = _filterInvestments(sharedInvestments);
+          return _SharedInvestmentsList(
+            sharedInvestments: filteredInvestments,
+          );
+        },
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, stack) => Center(
           child: Column(
@@ -87,6 +94,57 @@ class _SharedInvestmentPageState extends ConsumerState<SharedInvestmentPage>
 
   void _showCreateSharedInvestmentDialog(BuildContext context) {
     context.push('/shared-investment/create');
+  }
+
+  void _showSearchDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('搜索共享投资'),
+        content: TextField(
+          controller: _searchController,
+          decoration: const InputDecoration(
+            hintText: '输入投资名称、股票代码或股票名称',
+            prefixIcon: Icon(LucideIcons.search),
+          ),
+          autofocus: true,
+          onChanged: (value) {
+            setState(() {
+              _searchQuery = value;
+            });
+          },
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              setState(() {
+                _searchQuery = '';
+                _searchController.clear();
+              });
+              Navigator.of(context).pop();
+            },
+            child: const Text('清除'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('确定'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  List<SharedInvestment> _filterInvestments(List<SharedInvestment> investments) {
+    if (_searchQuery.isEmpty) {
+      return investments;
+    }
+
+    final query = _searchQuery.toLowerCase();
+    return investments.where((investment) {
+      return investment.name.toLowerCase().contains(query) ||
+          investment.stockCode.toLowerCase().contains(query) ||
+          investment.stockName.toLowerCase().contains(query);
+    }).toList();
   }
 }
 
@@ -164,10 +222,7 @@ class _SharedInvestmentCard extends ConsumerWidget {
         return Card(
           child: InkWell(
             onTap: () {
-              // TODO: 导航到详情页面
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('详情页面即将推出')),
-              );
+              context.push('/shared-investment/${sharedInvestment.id}');
             },
             borderRadius: BorderRadius.circular(12),
             child: Padding(

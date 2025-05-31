@@ -10,6 +10,8 @@ import '../presentation/pages/transactions/edit_transaction_page.dart';
 import '../presentation/pages/transactions/search_transactions_page.dart';
 import '../presentation/pages/shared_investment/shared_investment_page.dart';
 import '../presentation/pages/shared_investment/create_shared_investment_page.dart';
+import '../presentation/pages/shared_investment/shared_investment_detail_page.dart';
+import '../presentation/pages/shared_investment/edit_shared_investment_page.dart';
 import '../presentation/pages/analytics/analytics_page.dart';
 import '../presentation/pages/settings/settings_page.dart';
 import '../presentation/pages/import_export/import_export_page.dart';
@@ -84,6 +86,24 @@ final routerProvider = Provider<GoRouter>((ref) {
                 path: 'create',
                 name: 'create-shared-investment',
                 builder: (context, state) => const CreateSharedInvestmentPage(),
+              ),
+              GoRoute(
+                path: ':id',
+                name: 'shared-investment-detail',
+                builder: (context, state) {
+                  final id = state.pathParameters['id']!;
+                  return SharedInvestmentDetailPage(sharedInvestmentId: id);
+                },
+                routes: [
+                  GoRoute(
+                    path: 'edit',
+                    name: 'edit-shared-investment',
+                    builder: (context, state) {
+                      final id = state.pathParameters['id']!;
+                      return EditSharedInvestmentPage(sharedInvestmentId: id);
+                    },
+                  ),
+                ],
               ),
             ],
           ),

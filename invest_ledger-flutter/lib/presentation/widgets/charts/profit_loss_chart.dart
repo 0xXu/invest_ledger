@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:intl/intl.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 
 import '../../../data/models/transaction.dart';
+import '../../../data/models/color_theme_setting.dart';
+import '../../providers/color_theme_provider.dart';
 
-class ProfitLossChart extends StatelessWidget {
+class ProfitLossChart extends ConsumerWidget {
   final List<Transaction> transactions;
   final String title;
 
@@ -15,7 +19,27 @@ class ProfitLossChart extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final colorsAsync = ref.watch(profitLossColorsProvider);
+
+    return colorsAsync.when(
+      data: (colors) => _buildChart(context, colors),
+      loading: () => Card(
+        child: SizedBox(
+          height: 380,
+          child: const Center(child: CircularProgressIndicator()),
+        ),
+      ),
+      error: (_, __) => Card(
+        child: SizedBox(
+          height: 380,
+          child: const Center(child: Icon(Icons.error)),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildChart(BuildContext context, ProfitLossColors colors) {
     final theme = Theme.of(context);
     final chartData = _prepareChartData();
 
@@ -133,8 +157,8 @@ class ProfitLossChart extends StatelessWidget {
                         BarChartRodData(
                           toY: data.value,
                           color: data.value >= 0
-                              ? const Color(0xFF4CAF50)
-                              : const Color(0xFFF44336),
+                              ? colors.getProfitColor()
+                              : colors.getLossColor(),
                           width: 20,
                           borderRadius: const BorderRadius.only(
                             topLeft: Radius.circular(4),
@@ -158,7 +182,7 @@ class ProfitLossChart extends StatelessWidget {
 
     // 按月份分组
     final monthlyData = <String, double>{};
-    
+
     for (final transaction in transactions) {
       final monthKey = DateFormat('yyyy-MM').format(transaction.date);
       monthlyData[monthKey] = (monthlyData[monthKey] ?? 0) + transaction.profitLoss.toDouble();

@@ -32,6 +32,63 @@ class SharedInvestmentRepository {
     await _dao.deleteSharedInvestment(id);
   }
 
+  /// 更新共享投资状态
+  Future<void> updateSharedInvestmentStatus(String id, SharedInvestmentStatus status) async {
+    final sharedInvestment = await getSharedInvestmentById(id);
+    if (sharedInvestment != null) {
+      final updatedInvestment = sharedInvestment.copyWith(status: status);
+      await updateSharedInvestment(updatedInvestment);
+    }
+  }
+
+  /// 标记共享投资为完成
+  Future<void> markAsCompleted(String id, {Decimal? finalSellAmount}) async {
+    final sharedInvestment = await getSharedInvestmentById(id);
+    if (sharedInvestment != null) {
+      final updatedInvestment = sharedInvestment.copyWith(
+        status: SharedInvestmentStatus.completed,
+        sellAmount: finalSellAmount ?? sharedInvestment.sellAmount,
+      );
+      await updateSharedInvestment(updatedInvestment);
+    }
+  }
+
+  /// 取消共享投资
+  Future<void> cancelSharedInvestment(String id, {String? reason}) async {
+    final sharedInvestment = await getSharedInvestmentById(id);
+    if (sharedInvestment != null) {
+      final updatedNotes = reason != null
+          ? '${sharedInvestment.notes ?? ''}\n取消原因: $reason'.trim()
+          : sharedInvestment.notes;
+
+      final updatedInvestment = sharedInvestment.copyWith(
+        status: SharedInvestmentStatus.cancelled,
+        notes: updatedNotes,
+      );
+      await updateSharedInvestment(updatedInvestment);
+    }
+  }
+
+  /// 更新参与者盈亏
+  Future<void> updateParticipantProfitLoss(
+    String sharedInvestmentId,
+    String participantId,
+    Decimal profitLoss,
+  ) async {
+    final sharedInvestment = await getSharedInvestmentById(sharedInvestmentId);
+    if (sharedInvestment != null) {
+      final updatedParticipants = sharedInvestment.participants.map((participant) {
+        if (participant.id == participantId) {
+          return participant.copyWith(profitLoss: profitLoss);
+        }
+        return participant;
+      }).toList();
+
+      final updatedInvestment = sharedInvestment.copyWith(participants: updatedParticipants);
+      await updateSharedInvestment(updatedInvestment);
+    }
+  }
+
   /// 计算共享投资的总盈亏
   Future<Map<String, dynamic>> calculateSharedInvestmentStats(String sharedInvestmentId) async {
     final sharedInvestment = await getSharedInvestmentById(sharedInvestmentId);

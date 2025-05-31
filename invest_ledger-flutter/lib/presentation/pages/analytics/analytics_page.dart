@@ -2,12 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
+import '../../../data/services/report_export_service.dart';
 import '../../providers/transaction_provider.dart';
 import '../../providers/color_theme_provider.dart';
 import '../../widgets/charts/profit_loss_chart.dart';
 import '../../widgets/charts/stock_distribution_chart.dart';
+import '../../widgets/charts/improved_monthly_trend_chart.dart';
+import '../../widgets/charts/stock_performance_chart.dart';
 import '../../widgets/refresh_button.dart';
-import '../../widgets/animated_card.dart';
 
 class AnalyticsPage extends ConsumerStatefulWidget {
   const AnalyticsPage({super.key});
@@ -22,6 +24,100 @@ class _AnalyticsPageState extends ConsumerState<AnalyticsPage>
   @override
   bool get wantKeepAlive => true; // 保持页面状态，避免重建
 
+  /// 处理导出操作
+  Future<void> _handleExport(BuildContext context, WidgetRef ref, String exportType) async {
+    try {
+      final transactionsAsync = ref.read(transactionNotifierProvider);
+      final statsAsync = ref.read(transactionStatsProvider);
+
+      // 检查数据是否已加载
+      if (!transactionsAsync.hasValue || !statsAsync.hasValue) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Row(
+                children: [
+                  Icon(LucideIcons.alertCircle, color: Colors.white),
+                  SizedBox(width: 8),
+                  Text('数据正在加载中，请稍后再试'),
+                ],
+              ),
+              backgroundColor: Colors.orange,
+            ),
+          );
+        }
+        return;
+      }
+
+      final transactions = transactionsAsync.value!;
+      final stats = statsAsync.value!;
+
+      if (transactions.isEmpty) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Row(
+                children: [
+                  Icon(LucideIcons.alertCircle, color: Colors.white),
+                  SizedBox(width: 8),
+                  Text('暂无数据可导出'),
+                ],
+              ),
+              backgroundColor: Colors.orange,
+            ),
+          );
+        }
+        return;
+      }
+
+      String? filePath;
+      if (exportType == 'pdf') {
+        filePath = await ReportExportService.exportAnalysisReportToPDF(
+          transactions: transactions,
+          stats: stats,
+        );
+      } else if (exportType == 'csv') {
+        filePath = await ReportExportService.exportAnalysisReportToCSV(
+          transactions: transactions,
+          stats: stats,
+        );
+      }
+
+      if (filePath != null && context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(LucideIcons.checkCircle, color: Colors.white),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text('报告已导出到:\n$filePath'),
+                ),
+              ],
+            ),
+            backgroundColor: Colors.green,
+            duration: const Duration(seconds: 4),
+          ),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(LucideIcons.alertCircle, color: Colors.white),
+                const SizedBox(width: 8),
+                Expanded(child: Text('导出失败: $e')),
+              ],
+            ),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     super.build(context); // 必须调用，用于保活机制
@@ -32,15 +128,32 @@ class _AnalyticsPageState extends ConsumerState<AnalyticsPage>
       appBar: AppBar(
         title: const Text('数据分析'),
         actions: [
-          IconButton(
-            onPressed: () {
-              // TODO: 导出报告
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('导出功能即将推出')),
-              );
-            },
+          PopupMenuButton<String>(
             icon: const Icon(LucideIcons.download),
             tooltip: '导出报告',
+            onSelected: (value) => _handleExport(context, ref, value),
+            itemBuilder: (context) => [
+              const PopupMenuItem(
+                value: 'pdf',
+                child: Row(
+                  children: [
+                    Icon(LucideIcons.fileText),
+                    SizedBox(width: 8),
+                    Text('导出PDF报告'),
+                  ],
+                ),
+              ),
+              const PopupMenuItem(
+                value: 'csv',
+                child: Row(
+                  children: [
+                    Icon(LucideIcons.fileSpreadsheet),
+                    SizedBox(width: 8),
+                    Text('导出CSV报告'),
+                  ],
+                ),
+              ),
+            ],
           ),
           RefreshButton.icon(
             onRefresh: () async {
@@ -120,11 +233,8 @@ class _AnalyticsContent extends StatelessWidget {
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
-      child: AnimatedCardList(
-        staggerDelay: const Duration(milliseconds: 200),
-        animationType: CardAnimationType.fadeSlideIn,
-        slideDirection: SlideDirection.fromBottom,
-        enableScrollAnimation: true,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           // 统计概览
           statsAsync.when(
@@ -145,16 +255,39 @@ class _AnalyticsContent extends StatelessWidget {
           const SizedBox(height: 16),
 
           // 月度盈亏趋势图
-          ProfitLossChart(
-            transactions: transactions.cast(),
-            title: '月度盈亏趋势',
+          RepaintBoundary(
+            child: ProfitLossChart(
+              transactions: transactions.cast(),
+              title: '月度盈亏趋势',
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          // 月度趋势图
+          RepaintBoundary(
+            child: ImprovedMonthlyTrendChart(
+              transactions: transactions.cast(),
+              title: '全年月度趋势',
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          // 股票表现排行
+          RepaintBoundary(
+            child: StockPerformanceChart(
+              transactions: transactions.cast(),
+              title: '股票表现排行（前10）',
+              maxStocks: 10,
+            ),
           ),
           const SizedBox(height: 16),
 
           // 股票投资分布图
-          StockDistributionChart(
-            transactions: transactions.cast(),
-            title: '股票投资分布',
+          RepaintBoundary(
+            child: StockDistributionChart(
+              transactions: transactions.cast(),
+              title: '股票投资分布',
+            ),
           ),
         ],
       ),
